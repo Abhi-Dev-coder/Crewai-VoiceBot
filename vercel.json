@@ -2,7 +2,10 @@
   "builds": [
     {
       "src": "web/app.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "requirements": "web/requirements.txt"
+      }
     }
   ],
   "routes": [
@@ -10,5 +13,13 @@
       "src": "/(.*)",
       "dest": "web/app.py"
     }
-  ]
+  ],
+  "functions": {
+    "web/app.py": {
+      "runtime": "python3.9"
+    }
+  },
+  "env": {
+    "FLASK_DEBUG": "false"
+  }
 }
