@@ -1,0 +1,12 @@
+crewai
+groq
+flask
+speechrecognition
+pyttsx3
+pyaudio
+python-dotenv
+websockets
+asyncio-mqtt
+crewai_tools
+litellm
+google-generativeai
