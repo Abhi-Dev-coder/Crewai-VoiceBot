@@ -7,7 +7,7 @@ import os
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from main import VoiceBot
+from voicebot_web import VoiceBotWeb
 from config import Config
 
 app = Flask(__name__)
@@ -21,7 +21,7 @@ def init_voicebot():
     if voicebot is None:
         try:
             print("Initializing VoiceBot...")
-            voicebot = VoiceBot(init_audio=False)
+            voicebot = VoiceBotWeb()
             print("VoiceBot initialized successfully")
         except Exception as e:
             print(f"Error initializing VoiceBot: {e}")
