@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from crewai.tools import BaseTool
 
 class JSONLoggerTool(BaseTool):
@@ -25,7 +25,7 @@ class JSONLoggerTool(BaseTool):
             with open(self.log_file_path, 'w') as f:
                 json.dump([], f)
     
-    def _run(self, query: str, response: str = "", query_type: str = "user_query") -> str:
+    def _run(self, query: str, response: str = "", query_type: str = "user_query", session_id: Optional[str] = None) -> str:
         try:
             # Load existing logs
             with open(self.log_file_path, 'r') as f:
@@ -37,7 +37,7 @@ class JSONLoggerTool(BaseTool):
                 "query": query,
                 "response": response,
                 "query_type": query_type,
-                "session_id": self._get_session_id()
+                "session_id": session_id or self._get_session_id()
             }
             
             # Add to logs
@@ -62,5 +62,14 @@ class JSONLoggerTool(BaseTool):
             with open(self.log_file_path, 'r') as f:
                 logs = json.load(f)
             return logs[-limit:] if logs else []
+        except:
+            return []
+
+    def get_session_logs(self, session_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+        try:
+            with open(self.log_file_path, 'r') as f:
+                logs = json.load(f)
+            session_logs = [log for log in logs if log.get("session_id") == session_id]
+            return session_logs[-limit:] if session_logs else []
         except:
             return []

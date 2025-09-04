@@ -52,8 +52,8 @@ def process_voice():
         if bot is None:
             return jsonify({'error': 'VoiceBot initialization failed'}), 500
         
-        # Process the text query using direct method (NO CrewAI tasks)
-        result = bot.process_text_query(user_text)
+        # Process the text query using direct method with session memory
+        result = bot.process_text_query(user_text, session_id=session['session_id'])
         
         if result["success"]:
             result['session_id'] = session['session_id']
@@ -71,7 +71,11 @@ def get_logs():
         if bot is None:
             return jsonify({'error': 'VoiceBot not initialized'}), 500
         
-        recent_logs = bot.json_logger.get_recent_logs(limit=20)
+        # If session exists, prefer session-scoped logs; else fall back to recent logs
+        if 'session_id' in session:
+            recent_logs = bot.json_logger.get_session_logs(session['session_id'], limit=20)
+        else:
+            recent_logs = bot.json_logger.get_recent_logs(limit=20)
         return jsonify({
             'success': True,
             'logs': recent_logs
@@ -87,6 +91,19 @@ def health_check():
         'timestamp': datetime.now().isoformat()
     })
 
+@app.route('/api/get-history')
+def get_history():
+    try:
+        bot = init_voicebot()
+        if bot is None:
+            return jsonify({'error': 'VoiceBot not initialized'}), 500
+        if 'session_id' not in session:
+            return jsonify({'success': True, 'history': []})
+        history = bot._get_history(session['session_id'])
+        return jsonify({'success': True, 'history': history})
+    except Exception as e:
+        return jsonify({'error': f'Error retrieving history: {str(e)}'}), 500
+
 if __name__ == '__main__':
     if not Config.GROQ_API_KEY:
         print("Error: GROQ_API_KEY environment variable not set!")
@@ -94,49 +111,3 @@ if __name__ == '__main__':
     
     print("Starting VoiceBot Web Application...")
     app.run(host=Config.FLASK_HOST, port=Config.FLASK_PORT, debug=Config.FLASK_DEBUG)
-'''
-
-# Simple test script to verify the fix
-test_direct = '''
-# test_direct.py - Test the direct approach
-
-from config import Config
-from agents.voice_assistant import VoiceAssistantAgent
-from tools.json_logger import JSONLoggerTool
-
-def test_direct_approach():
-    if not Config.GROQ_API_KEY:
-        print("❌ GROQ_API_KEY not found!")
-        return
-    
-    print("🚀 Testing Direct Groq Approach (No CrewAI tasks)...")
-    
-    try:
-        # Initialize without CrewAI crew
-        assistant = VoiceAssistantAgent(Config.GROQ_API_KEY)
-        logger = JSONLoggerTool()
-        
-        # Test direct processing
-        test_query = "What are your store hours?"
-        print(f"📝 Query: {test_query}")
-        
-        # Use direct method (bypasses CrewAI completely)
-        response = assistant.process_query(test_query)
-        print(f"✅ Response: {response}")
-        
-        # Log the interaction
-        logger._run(
-            query=test_query,
-            response=response,
-            query_type="direct_test"
-        )
-        
-        print("✅ Test completed successfully - NO CrewAI tasks used!")
-        
-    except Exception as e:
-        print(f"❌ Test failed: {e}")
-        import traceback
-        traceback.print_exc()
-
-if __name__ == "__main__":
-    test_direct_approach()

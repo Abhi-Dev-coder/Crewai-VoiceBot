@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class Config:
     GROQ_API_KEY = os.getenv('GROQ_API_KEY')
     GROQ_MODEL = 'llama-3.1-8b-instant'
@@ -15,8 +17,8 @@ class Config:
     TTS_RATE = 200
     TTS_VOLUME = 0.9
     
-    # JSON Logging
-    LOG_FILE_PATH = 'logs/user_queries.json'
+    # JSON Logging (absolute path to project logs)
+    LOG_FILE_PATH = os.path.join(BASE_DIR, 'logs', 'user_queries.json')
     
     # Flask Settings
     FLASK_HOST = '0.0.0.0'

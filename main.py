@@ -9,6 +9,8 @@ from config import Config
 class VoiceBot:
     def __init__(self, init_audio: bool = True):
         self.config = Config
+        # Simple in-memory conversation history per session_id
+        self.session_histories: dict[str, list[dict]] = {}
         
         # Initialize tools (audio tools optional for web environments)
         if init_audio:
@@ -32,13 +34,30 @@ class VoiceBot:
         self.voice_assistant = VoiceAssistantAgent(self.config.GROQ_API_KEY)
         self.logger_agent = LoggerAgent(self.config.GROQ_API_KEY)
     
-    def process_text_query(self, query: str) -> dict:
+    def _get_history(self, session_id: str) -> list:
+        return self.session_histories.get(session_id, [])
+
+    def _append_history(self, session_id: str, query: str, response: str):
+        history = self.session_histories.setdefault(session_id, [])
+        history.append({
+            "timestamp": datetime.now().isoformat(),
+            "query": query,
+            "response": response
+        })
+        # keep last N to bound memory
+        if len(history) > 50:
+            self.session_histories[session_id] = history[-50:]
+
+    def process_text_query(self, query: str, session_id: str | None = None) -> dict:
         """Process text query without using CrewAI tasks"""
         try:
             print(f"Processing query: {query}")
             
-            # Generate response using direct Groq client
-            assistant_response = self.voice_assistant.process_query(query)
+            # Prepare contextual history if available
+            history = self._get_history(session_id) if session_id else []
+            
+            # Generate response using direct Groq client with context
+            assistant_response = self.voice_assistant.process_query(query, history=history)
             
             print(f"Generated response: {assistant_response}")
             
@@ -46,8 +65,13 @@ class VoiceBot:
             self.json_logger._run(
                 query=query,
                 response=assistant_response,
-                query_type="direct_interaction"
+                query_type="direct_interaction",
+                session_id=session_id
             )
+            
+            # Update in-memory history
+            if session_id:
+                self._append_history(session_id, query, assistant_response)
             
             return {
                 "success": True,
