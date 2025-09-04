@@ -1,19 +1,17 @@
 from flask import Flask, render_template, request, jsonify, session
-import asyncio
-import json
 import uuid
 from datetime import datetime
 import sys
 import os
 
-# Add parent directory to path to import our modules
+# Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import VoiceBot
 from config import Config
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this in production
+app.secret_key = 'your-secret-key-here'
 
 # Global VoiceBot instance
 voicebot = None
@@ -23,8 +21,6 @@ def init_voicebot():
     if voicebot is None:
         try:
             print("Initializing VoiceBot...")
-            # Import here to ensure Config class is properly loaded
-            from main import VoiceBot
             voicebot = VoiceBot(init_audio=False)
             print("VoiceBot initialized successfully")
         except Exception as e:
@@ -56,40 +52,14 @@ def process_voice():
         if bot is None:
             return jsonify({'error': 'VoiceBot initialization failed'}), 500
         
-        # Process the text query (simulating voice input)
-        try:
-            # Generate response using CrewAI
-            from tasks.voice_tasks import create_voice_response_task
-            
-            response_task = create_voice_response_task(
-                bot.voice_assistant.agent,
-                [bot.json_logger],
-                user_text
-            )
-            
-            # Update crew with the task and execute
-            bot.crew.tasks = [response_task]
-            crew_result = bot.crew.kickoff()
-            assistant_response = str(crew_result)
-            
-            # Log the interaction
-            bot.json_logger._run(
-                query=user_text,
-                response=assistant_response,
-                query_type="web_voice_interaction"
-            )
-            
-            return jsonify({
-                'success': True,
-                'user_query': user_text,
-                'assistant_response': assistant_response,
-                'timestamp': datetime.now().isoformat(),
-                'session_id': session['session_id']
-            })
-            
-        except Exception as e:
-            error_msg = f"Error processing query: {str(e)}"
-            return jsonify({'error': error_msg}), 500
+        # Process the text query using direct method (NO CrewAI tasks)
+        result = bot.process_text_query(user_text)
+        
+        if result["success"]:
+            result['session_id'] = session['session_id']
+            return jsonify(result)
+        else:
+            return jsonify({'error': result.get('error', 'Unknown error')}), 500
             
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
@@ -118,10 +88,55 @@ def health_check():
     })
 
 if __name__ == '__main__':
-    # Check configuration
     if not Config.GROQ_API_KEY:
         print("Error: GROQ_API_KEY environment variable not set!")
         exit(1)
     
     print("Starting VoiceBot Web Application...")
     app.run(host=Config.FLASK_HOST, port=Config.FLASK_PORT, debug=Config.FLASK_DEBUG)
+'''
+
+# Simple test script to verify the fix
+test_direct = '''
+# test_direct.py - Test the direct approach
+
+from config import Config
+from agents.voice_assistant import VoiceAssistantAgent
+from tools.json_logger import JSONLoggerTool
+
+def test_direct_approach():
+    if not Config.GROQ_API_KEY:
+        print("❌ GROQ_API_KEY not found!")
+        return
+    
+    print("🚀 Testing Direct Groq Approach (No CrewAI tasks)...")
+    
+    try:
+        # Initialize without CrewAI crew
+        assistant = VoiceAssistantAgent(Config.GROQ_API_KEY)
+        logger = JSONLoggerTool()
+        
+        # Test direct processing
+        test_query = "What are your store hours?"
+        print(f"📝 Query: {test_query}")
+        
+        # Use direct method (bypasses CrewAI completely)
+        response = assistant.process_query(test_query)
+        print(f"✅ Response: {response}")
+        
+        # Log the interaction
+        logger._run(
+            query=test_query,
+            response=response,
+            query_type="direct_test"
+        )
+        
+        print("✅ Test completed successfully - NO CrewAI tasks used!")
+        
+    except Exception as e:
+        print(f"❌ Test failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    test_direct_approach()

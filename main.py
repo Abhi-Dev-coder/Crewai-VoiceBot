@@ -1,16 +1,13 @@
 import asyncio
 import json
 from datetime import datetime
-from crewai import Crew
 from agents.voice_assistant import VoiceAssistantAgent, LoggerAgent
-from tasks.voice_tasks import create_voice_response_task, create_logging_task
 from tools.speech_tools import SpeechRecognitionTool, TextToSpeechTool
 from tools.json_logger import JSONLoggerTool
 from config import Config
 
 class VoiceBot:
     def __init__(self, init_audio: bool = True):
-        # Use global Config (module-level class with attributes)
         self.config = Config
         
         # Initialize tools (audio tools optional for web environments)
@@ -31,106 +28,92 @@ class VoiceBot:
         
         self.json_logger = JSONLoggerTool(self.config.LOG_FILE_PATH)
         
-        # Initialize agents
+        # Initialize agents WITHOUT CrewAI crew system
         self.voice_assistant = VoiceAssistantAgent(self.config.GROQ_API_KEY)
-        self.logger_agent = LoggerAgent()
-        
-        # Create crew
-        self.crew = Crew(
-            agents=[self.voice_assistant.agent, self.logger_agent.agent],
-            tasks=[],  # We'll add tasks dynamically
-            verbose=True
-        )
+        self.logger_agent = LoggerAgent(self.config.GROQ_API_KEY)
     
-    async def process_voice_interaction(self):
-        """Main interaction loop"""
-        print("VoiceBot is ready! Say something...")
-        
+    def process_text_query(self, query: str) -> dict:
+        """Process text query without using CrewAI tasks"""
         try:
-            # 1. Capture voice input
-            print("Listening for voice input...")
-            if not self.speech_recognition:
-                raise RuntimeError("SpeechRecognitionTool not initialized. Use web endpoint or enable init_audio.")
-            user_query = self.speech_recognition._run()
+            print(f"Processing query: {query}")
             
-            if "Could not understand" in user_query or "Error" in user_query or "no speech detected" in user_query.lower():
-                print(f"Voice input error: {user_query}")
-                error_response = "I'm sorry, I couldn't understand what you said. Please try again."
-                if self.text_to_speech:
-                    self.text_to_speech._run(error_response)
-                return
+            # Generate response using direct Groq client
+            assistant_response = self.voice_assistant.process_query(query)
             
-            print(f"User said: {user_query}")
+            print(f"Generated response: {assistant_response}")
             
-            # 2. Generate response using CrewAI
-            response_task = create_voice_response_task(
-                self.voice_assistant.agent,
-                [self.json_logger],
-                user_query
-            )
-            
-            # Update crew with the task and execute
-            self.crew.tasks = [response_task]
-            crew_result = self.crew.kickoff()
-            assistant_response = str(crew_result)
-            
-            print(f"Assistant response: {assistant_response}")
-            
-            # 3. Log the interaction
+            # Log the interaction
             self.json_logger._run(
-                query=user_query,
+                query=query,
                 response=assistant_response,
-                query_type="voice_interaction"
+                query_type="direct_interaction"
             )
-            
-            # 4. Speak the response
-            if self.text_to_speech:
-                self.text_to_speech._run(assistant_response)
             
             return {
-                "user_query": user_query,
+                "success": True,
+                "user_query": query,
                 "assistant_response": assistant_response,
                 "timestamp": datetime.now().isoformat()
             }
             
         except Exception as e:
+            error_msg = f"Error processing query: {str(e)}"
+            print(error_msg)
+            return {
+                "success": False,
+                "error": error_msg
+            }
+    
+    async def process_voice_interaction(self):
+        """Main interaction loop for voice input"""
+        print("VoiceBot is ready! Say something...")
+        
+        try:
+            # 1. Capture voice input
+            if not self.speech_recognition:
+                raise RuntimeError("SpeechRecognitionTool not initialized.")
+            
+            user_query = self.speech_recognition._run()
+            
+            if "Could not understand" in user_query or "Error" in user_query:
+                error_response = "I'm sorry, I couldn't understand. Please try again."
+                if self.text_to_speech:
+                    self.text_to_speech._run(error_response)
+                return {"error": "Speech recognition failed"}
+            
+            # 2. Process the query
+            result = self.process_text_query(user_query)
+            
+            if result["success"]:
+                # 3. Speak the response
+                if self.text_to_speech:
+                    self.text_to_speech._run(result["assistant_response"])
+            
+            return result
+            
+        except Exception as e:
             error_msg = f"An error occurred: {str(e)}"
             print(error_msg)
             if self.text_to_speech:
-                self.text_to_speech._run("I'm sorry, I encountered an error. Please try again.")
+                self.text_to_speech._run("I encountered an error. Please try again.")
             return {"error": error_msg}
-    
-    def run_continuous(self):
-        """Run the voice bot continuously"""
-        print("Starting VoiceBot in continuous mode...")
-        print("Press Ctrl+C to stop")
-        
-        try:
-            while True:
-                result = asyncio.run(self.process_voice_interaction())
-                if result and "error" not in result:
-                    print(f"Interaction completed successfully at {result['timestamp']}")
-                
-                # Small delay between interactions
-                asyncio.run(asyncio.sleep(2))
-                
-        except KeyboardInterrupt:
-            print("\nVoiceBot stopped by user.")
-        except Exception as e:
-            print(f"Fatal error: {e}")
 
 def main():
-    # Check if GROQ_API_KEY is set
     if not Config.GROQ_API_KEY:
         print("Error: GROQ_API_KEY environment variable not set!")
-        print("Please set your Groq API key in a .env file or environment variable.")
         return
     
-    # Initialize and run VoiceBot
-    voicebot = VoiceBot()
-    voicebot.run_continuous()
+    # Test text processing
+    voicebot = VoiceBot(init_audio=False)
+    
+    # Test with a simple query
+    test_query = "Hello, how are you today?"
+    result = voicebot.process_text_query(test_query)
+    
+    if result["success"]:
+        print(f"✅ Success! Response: {result['assistant_response']}")
+    else:
+        print(f"❌ Failed: {result['error']}")
 
 if __name__ == "__main__":
     main()
-
-    

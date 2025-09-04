@@ -1,5 +1,8 @@
 crewai
 groq
+langchain-groq==0.1.5
+langchain-core==0.1.52
+
 flask
 speechrecognition
 pyttsx3
@@ -7,6 +10,6 @@ pyaudio
 python-dotenv
 websockets
 asyncio-mqtt
-crewai_tools
+crewai-tools
 litellm
 google-generativeai
