@@ -115,6 +115,24 @@ header p {
     box-shadow: 0 4px 15px rgba(238, 90, 36, 0.3);
 }
 
+.pause-button {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: #57606f;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(87, 96, 111, 0.3);
+}
+
+.pause-button:hover {
+    transform: translateY(-1px);
+    background: #2f3542;
+}
+
 .mic-button:hover {
     transform: scale(1.05);
     box-shadow: 0 6px 20px rgba(238, 90, 36, 0.4);

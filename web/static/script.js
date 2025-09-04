@@ -12,6 +12,7 @@ class VoiceBotApp {
     
     initElements() {
         this.micButton = document.getElementById('micButton');
+        this.pauseTtsButton = document.getElementById('pauseTtsButton');
         this.voiceStatus = document.getElementById('voiceStatus');
         this.textInput = document.getElementById('textInput');
         this.sendButton = document.getElementById('sendButton');
@@ -109,6 +110,7 @@ class VoiceBotApp {
     
     bindEvents() {
         this.micButton.addEventListener('click', () => this.toggleListening());
+        this.pauseTtsButton.addEventListener('click', () => this.togglePauseTts());
         this.sendButton.addEventListener('click', () => this.handleTextSubmit());
         this.textInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.handleTextSubmit();
@@ -242,6 +244,23 @@ class VoiceBotApp {
         };
         
         this.synthesis.speak(utterance);
+    }
+
+    togglePauseTts() {
+        try {
+            if (!this.synthesis) return;
+            if (this.synthesis.speaking && !this.synthesis.paused) {
+                this.synthesis.pause();
+                this.voiceStatus.textContent = 'Speech paused';
+                if (this.pauseTtsButton) this.pauseTtsButton.innerHTML = '<i class="fas fa-play"></i>';
+            } else if (this.synthesis.paused) {
+                this.synthesis.resume();
+                this.voiceStatus.textContent = 'Speaking...';
+                if (this.pauseTtsButton) this.pauseTtsButton.innerHTML = '<i class="fas fa-pause"></i>';
+            }
+        } catch (e) {
+            console.error('TTS pause/resume error:', e);
+        }
     }
     
     setProcessingState(isProcessing) {

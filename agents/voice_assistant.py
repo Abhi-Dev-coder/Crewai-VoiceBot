@@ -37,9 +37,24 @@ class VoiceAssistantAgent:
             # NO LLM parameter!
         )
     
-    def process_query(self, query: str) -> str:
-        """Process query directly, bypass CrewAI"""
-        return self.groq_client.generate_response(query)
+    def process_query(self, query: str, history: list | None = None) -> str:
+        """Process query directly, optionally using short conversation history for context"""
+        if history:
+            # Build a compact context prefix from recent exchanges
+            recent_pairs = history[-5:]  # limit context size
+            context_lines = []
+            for item in recent_pairs:
+                user = item.get("query")
+                assistant = item.get("response")
+                if user:
+                    context_lines.append(f"User: {user}")
+                if assistant:
+                    context_lines.append(f"Assistant: {assistant}")
+            context = "\n".join(context_lines)
+            prompt = f"Context from previous conversation (most recent first):\n{context}\n\nCurrent user message: {query}\n\nPlease answer concisely while respecting the context."
+        else:
+            prompt = query
+        return self.groq_client.generate_response(prompt)
 
 class LoggerAgent:
     def __init__(self, groq_api_key: str):

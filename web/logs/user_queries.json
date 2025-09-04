@@ -33,5 +33,33 @@
     "response": "I'm not a physical store, but I'm here to help 24/7. I'm a virtual assistant, so you can reach me anytime you have a question or need assistance. If you're looking for store hours for a specific business, I can try to help you find that information. Just let me know the name of the store or their location, and I'll do my best to provide you with their hours of operation.",
     "query_type": "direct_test",
     "session_id": "20250904_19"
+  },
+  {
+    "timestamp": "2025-09-04T20:46:04.766642",
+    "query": "What are your store hours?",
+    "response": "I'm a voice assistant, so I don't have a physical store. I'm here to help answer your questions 24/7, though. If you're looking for store hours, could you please tell me the specific store you're interested in? I can try to look up their hours for you.",
+    "query_type": "direct_test",
+    "session_id": "20250904_20"
+  },
+  {
+    "timestamp": "2025-09-04T20:46:08.467118",
+    "query": "What are your store hours?",
+    "response": "I'm a virtual assistant, so I don't have a physical store. However, I'm available 24/7 to help you with any questions or tasks you may have. If you're looking for store hours for a specific business, I can try to assist you by providing general information or directing you to their website or customer service department. What type of store are you looking for?",
+    "query_type": "direct_test",
+    "session_id": "20250904_20"
+  },
+  {
+    "timestamp": "2025-09-04T20:52:07.969664",
+    "query": "What are your store hours?",
+    "response": "I'm not a physical store, but rather a virtual assistant. I'm available 24/7 to help answer your questions and provide information. However, if you're looking for store hours for a specific business, I can try to help you find that information. Can you please tell me the name of the store or the type of business you're looking for?",
+    "query_type": "direct_test",
+    "session_id": "20250904_20"
+  },
+  {
+    "timestamp": "2025-09-04T20:52:09.760129",
+    "query": "What are your store hours?",
+    "response": "I'm not a physical store, I'm a digital voice assistant. I'm available 24/7 to help you with any questions or tasks you may have. However, if you're looking for store hours for a specific location, I can try to help you find that information. Can you please tell me the name of the store you're looking for?",
+    "query_type": "direct_test",
+    "session_id": "20250904_20"
   }
 ]
