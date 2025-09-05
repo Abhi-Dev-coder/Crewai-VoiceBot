@@ -89,5 +89,12 @@
     "response": "That's awesome to hear. It's contagious, you know. You're already making my day brighter just by chatting with me. So, how's your day going so far? Anything exciting happened, or is it just a beautiful, relaxing day?",
     "query_type": "direct_interaction",
     "session_id": "2bba96e7-def9-4bb9-a8dc-5d5b2868bfbf"
+  },
+  {
+    "timestamp": "2025-09-05T11:11:39.345395",
+    "query": "hello hi hello",
+    "response": "Hello back to you. It's nice to meet you. Is there something I can help you with or would you like to chat?",
+    "query_type": "direct_interaction",
+    "session_id": "9ca7fcb3-7600-4910-b971-dc97be89ec3f"
   }
 ]
