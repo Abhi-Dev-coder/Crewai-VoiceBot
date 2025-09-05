@@ -21,10 +21,9 @@ class Config:
     LOG_FILE_PATH = os.path.join(BASE_DIR, 'logs', 'user_queries.json')
     
     # Flask Settings
-    FLASK_HOST = os.getenv('FLASK_HOST', '0.0.0.0')
-    FLASK_PORT = int(os.getenv('PORT', os.getenv('FLASK_PORT', 5000)))
-    FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
-    FLASK_ENV = os.getenv('FLASK_ENV', 'development')
+    FLASK_HOST = '0.0.0.0'
+    FLASK_PORT = 5000
+    FLASK_DEBUG = True
 
 # Ensure no OpenAI fallback
 if 'OPENAI_API_KEY' in os.environ:
